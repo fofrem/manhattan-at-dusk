@@ -1,158 +1,26 @@
 <!doctype html>
-<html lang=en>
+<!-- Manhattan at Dusk. A procedural city fork of Noniv/abyssal-garden. MIT license. -->
+<html lang="fr">
 <head>
-<meta charset=utf-8>
-<title>Abyssal Garden</title>
-<meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=theme-color content=#03131c>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#171b29"><meta name="description" content="Quelques blocs de Manhattan à l’heure où la ville s’allume. Une promenade libre en 3D, entièrement générée par code avec WebGPU.">
+<title>Manhattan at Dusk — La ville s’allume</title>
+<link rel="icon" href="data:,">
+<style>#scene{outline:none;touch-action:none}</style>
 <style>
-/* The class on <body> is the state of the page:
-   l = loading, m = menu, g = in the scene (g p while the mouse is captured), l e = failed to start */
-html { background: #03131c; }
-body {
-  position: fixed; top: 0; left: 0; width: 100%; height: 100%; margin: 0; overflow: hidden;
-  background: radial-gradient(#0b3a4d, #03131c 70%);
-  font: 700 clamp(13px, .7vw + .9vh, 36px)/1.4 system-ui, sans-serif; color: #e8fbff;
-  -webkit-user-select: none; user-select: none;
-}
-/* a phone held upright gets the whole page turned on its side, so the scene is always landscape */
-@media (orientation: portrait) and (pointer: coarse) {
-  body { width: 100dvh; height: 100dvw; transform-origin: 0 0; transform: rotate(90deg) translateY(-100%); }
-}
-
-/* the scene: blurred and dimmed behind the menu, comes into focus when you dive */
-canvas {
-  position: absolute; width: 100%; height: 100%; touch-action: none; cursor: crosshair;
-  transition: filter 1s, transform 1s, opacity 2s;
-}
-body:not(.g) canvas { filter: blur(1vmax) brightness(.5); transform: scale(1.06); }
-.l canvas { opacity: 0; }
-
-/* menu: the loading bar and the buttons share one grid cell, so nothing jumps when they swap */
-#m {
-  position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: min(2.2em, 6vmin);
-  padding: 1em 1em 4.5em; text-align: center; background: radial-gradient(#03131c00 30%, #03131ccc);
-  transition: opacity .5s, visibility .5s;
-}
-.g #m, .m #l, .l #g { opacity: 0; visibility: hidden; }
-h1 {
-  margin: 0; font: 900 4.4em/1 system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase;
-  color: #0000; background: linear-gradient(#fff 25%, #7ff3ff 60%, #14a9c4);
-  -webkit-background-clip: text; background-clip: text; filter: drop-shadow(0 .06em .2em #000c);
-}
-p { margin: 0; }
-#a { display: grid; width: 27em; max-width: 100%; }
-#a > * { grid-area: 1/1; transition: opacity .8s, visibility .8s; }
-#s, #w, #q, #k, #h { font-size: .8em; letter-spacing: .12em; text-transform: uppercase; }
-#w { margin-top: 1.2em; color: #7ff3ff; text-wrap: balance; }
-
-/* loading bar */
-#p {
-  height: .5em; margin: .4em 0 1em; overflow: hidden; border-radius: 1em; background: #03131c;
-  box-shadow: 0 0 0 2px #7ff3ff80, 0 0 1.5em #14a9c4;
-}
-#b {
-  display: block; height: 100%; background: linear-gradient(90deg, #14a9c4, #9ff6ff);
-  transform: scaleX(0); transform-origin: 0; will-change: transform;
-}
-.e #p { visibility: hidden; }
-.e #s { font-size: 1.1em; letter-spacing: 0; text-transform: none; }
-
-/* buttons */
-button, a {
-  display: flex; align-items: center; justify-content: center; gap: .6em; padding: .8em 1.4em; border: 0;
-  border-radius: .5em; background: #fff; box-shadow: inset 0 -.2em #0003, 0 .3em 1em #0009;
-  font: 800 1em/1.2 system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; text-decoration: none;
-  color: #03222d; cursor: pointer; transition: transform .12s, filter .12s;
-}
-button:hover, a:hover { transform: translateY(-.12em); filter: brightness(1.15); }
-button:active, a:active { transform: translateY(.1em); filter: brightness(.9); }
-:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-#g { display: grid; gap: min(1.2em, 3.5vmin); }
-#d {
-  padding: .9em; background: linear-gradient(#9ff6ff, #19c3d6); font-size: 1.3em;
-  box-shadow: inset 0 -.2em #0003, 0 0 2em #19c3d6b3;
-}
-
-/* GitHub and Ko-fi: always at the bottom of the menu, in their own colours */
-#f { position: absolute; left: 0; right: 0; bottom: 1.5em; display: flex; justify-content: center; gap: 1em; font-size: .8em; }
-a + a { background: #ff5e5b; color: #fff; }
-svg { width: 1.5em; height: 1.5em; fill: currentColor; }
-
-/* dark plates under the dive button: detail level, list of controls, touch hint */
-#q, #k, #h { padding: 1em 1.6em; border-radius: .7em; background: #03131cb3; }
-
-/* detail level: three buttons in a row, the current one lit */
-#q { display: flex; align-items: center; gap: .4em; padding: .4em; }
-#q span { flex: 1; color: #7ff3ff; }
-#q button { flex: 1.2; padding: .7em 0; background: none; box-shadow: none; color: #e8fbff; }
-#q button:hover { background: #7ff3ff33; }
-#q .on { background: linear-gradient(#9ff6ff, #19c3d6); box-shadow: inset 0 -.2em #0003; color: #03222d; pointer-events: none; }
-
-/* list of controls: two groups, key caps right-aligned against their labels */
-#k { display: flex; justify-content: center; gap: 2em; text-align: left; }
-#k p { display: grid; grid-template-columns: auto auto; align-content: start; align-items: center; gap: .55em .9em; }
-#k p + p { padding-left: 2em; border-left: 2px solid #7ff3ff40; }
-#k i { display: flex; justify-self: end; align-items: center; gap: .25em; font-style: normal; }
-#k b {
-  min-width: 1.1em; padding: .2em .5em; border-radius: .35em; background: #e8fbff;
-  box-shadow: inset 0 -.15em #0004; color: #03222d; text-align: center;
-}
-#h { display: none; }
-@media (pointer: coarse), (max-height: 30em) {
-  #k { display: none; }
-}
-@media (pointer: coarse) {
-  #h { display: block; }
-}
-
-/* in the scene: a small menu button (hidden while the mouse is captured, Esc does the same) and the stats line */
-#o {
-  position: absolute; top: .6em; right: .6em; display: none; padding: .3em .6em; background: #03222dd9;
-  box-shadow: inset 0 0 0 2px #7ff3ff, 0 .3em 1em #0009; font-size: 1.3em; color: #e8fbff; opacity: .8;
-}
-.g #o { display: flex; }
-.p #o { display: none; }
-#i {
-  position: absolute; top: 1em; left: 1.2em; margin: 0; font: .8em/1.6 ui-monospace, Consolas, monospace;
-  white-space: pre-wrap; text-shadow: 0 1px 4px #000; pointer-events: none;
-}
+:root{color-scheme:dark;--cream:#f3e9d7;--muted:#b9b4ad;--gold:#e8ba7b;--line:#f3e9d72b;font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#222735;color:var(--cream)}button,a,input{ -webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;cursor:pointer}button:disabled{cursor:wait;opacity:.5}button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:5px}button{border:0}a{color:inherit}#scene{position:fixed;inset:0;width:100%;height:100%;display:block;background:linear-gradient(#283750,#aa797c 65%,#dcab89)}.shade{position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,#10141cbd 0%,#11151e45 45%,transparent 75%),linear-gradient(0deg,#10151d96,transparent 30%)}header{position:fixed;top:32px;left:40px;right:40px;display:flex;align-items:center;justify-content:space-between;z-index:3}.brand{display:flex;align-items:center;gap:15px;text-decoration:none}.monogram{height:43px;width:43px;border:1px solid #f3e9d76b;display:grid;place-items:center;font:29px Georgia,serif}.brand-name{font-size:11px;line-height:1.5;letter-spacing:.22em}.brand-name span{color:#d7c5b1;font-size:9px;letter-spacing:.32em}.top-actions{display:flex;gap:12px;align-items:center}.pill{background:#181d2799;border:1px solid var(--line);border-radius:30px;padding:10px 16px;backdrop-filter:blur(14px);font-size:11px;letter-spacing:.03em}.pill:hover{background:#29303dc9}.dot{display:inline-block;width:5px;height:5px;background:var(--gold);border-radius:100%;margin-right:8px}.intro{position:fixed;left:8%;top:50%;transform:translateY(-45%);max-width:540px;z-index:2}.eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:.26em;color:#e5c19d;display:flex;align-items:center;gap:14px}.eyebrow:before{content:"";display:block;width:35px;height:1px;background:#dfb985}h1{font:normal clamp(60px,6.8vw,108px)/.97 Georgia,"Times New Roman",serif;letter-spacing:-.045em;margin:26px 0}h1 em{font-weight:normal;color:#e9be94}.intro p{font-size:14px;line-height:1.9;max-width:320px;color:#d4ceca;margin:27px 0 30px}.cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.primary{background:var(--cream);color:#252932;padding:16px 23px;display:flex;align-items:center;justify-content:space-between;gap:45px;font-size:12px;border-radius:3px;font-weight:600}.primary:hover{background:#fff5e4}.primary span{font-size:20px;font-weight:400}.secondary{background:transparent;color:#e2d5c5;padding:12px 0;border-bottom:1px solid #e2d5c54d;font-size:11px;margin-left:8px}.loading{color:#c3afa0;font-size:10px;letter-spacing:.1em;margin-top:21px;min-height:15px}.coordinates{position:fixed;right:40px;bottom:108px;text-align:right;z-index:2;font-size:10px;letter-spacing:.14em;color:#e7ddd2}.coordinates strong{display:block;font:italic 24px Georgia,serif;letter-spacing:0;margin-bottom:9px}.coordinates span{opacity:.65}.bottom{position:fixed;left:40px;right:40px;bottom:26px;z-index:3;display:flex;justify-content:space-between;align-items:end;border-top:1px solid var(--line);padding-top:17px;gap:15px}.micro{font-size:9px;letter-spacing:.1em;color:#c6beb5}.micro a{text-decoration:none;border-bottom:1px solid #c6beb54d}.experience-label{display:flex;gap:23px;font-size:9px;letter-spacing:.16em;color:#d1c4b6}.experience-label span{display:flex;align-items:center;gap:8px}.experience-label b{width:4px;height:4px;border:1px solid #e0b886;transform:rotate(45deg)}#hud{position:fixed;left:50%;bottom:31px;transform:translateX(-50%);z-index:4;display:flex;gap:6px;padding:7px;border-radius:9px;background:#141b27c9;border:1px solid var(--line);backdrop-filter:blur(18px)}#hud button{padding:10px 14px;background:transparent;border-radius:5px;font-size:11px;white-space:nowrap}#hud button:hover{background:#ffffff18}.keycap{display:inline-grid;place-items:center;padding:0 4px;min-width:20px;min-height:20px;border:1px solid #c9bbaa4d;border-radius:3px;font:10px system-ui;color:#ebd8c3}.hint{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:4;font-size:11px;background:#151b25b3;padding:9px 17px;border-radius:20px;pointer-events:none;opacity:0;transition:opacity .4s}.hint.show{opacity:1}#crosshair{position:fixed;left:50%;top:50%;height:3px;width:3px;background:#f6e7d980;border-radius:50%;pointer-events:none}#stats{position:fixed;left:40px;top:96px;font:10px/1.7 ui-monospace,monospace;color:#e4d0ba;z-index:3;background:#15202ba8;padding:10px 14px;border-radius:4px}.active .intro,.active .shade,.active .coordinates,.active .experience-label{display:none}.active header{pointer-events:none}.active .top-actions{pointer-events:auto}.active .brand{opacity:.7}.active .bottom{border:0;pointer-events:none}.active .micro{font-size:8px;color:#e1cfbc80}.active .micro a{pointer-events:auto}dialog{background:#1b2230ed;color:var(--cream);border:1px solid var(--line);border-radius:12px;max-width:520px;width:calc(100% - 32px);padding:34px;backdrop-filter:blur(30px);max-height:90vh;overflow:auto}dialog::backdrop{background:#0c111b99}dialog h2{font:34px Georgia,serif;font-weight:400;margin:0 0 9px}dialog p{font-size:12px;color:#bfb9b3}.dialog-head{display:flex;align-items:center;justify-content:space-between;gap:15px}.close{background:transparent;font-size:24px;padding:0 8px}.controls{display:grid;grid-template-columns:1fr auto;gap:11px;font-size:11px;padding:22px 0;border-bottom:1px solid var(--line);margin-bottom:23px}.controls dd{margin:0}.controls dt{color:#d0c6bb}.setting{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:11px;margin-top:20px}.quality{display:flex;gap:5px}.quality button{background:#ffffff08;border:1px solid var(--line);padding:7px 10px;border-radius:4px;font-size:10px}.quality button[aria-pressed=true]{background:#dfb58324;border-color:#dfb583a8}.places{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:22px}.places button{background:#ffffff06;border:1px solid var(--line);padding:12px 10px;text-align:left;font-size:10px;border-radius:4px}.places button span{color:var(--gold);margin-right:8px}.places button:hover{background:#ffffff13}#failure{position:fixed;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);width:min(500px,90vw);padding:32px;background:#1b2230;border:1px solid var(--line);border-radius:10px}#failure h2{font:28px Georgia,serif}#failure p{color:#c7beb4;font-size:13px}#touch{position:fixed;bottom:110px;left:22px;right:22px;display:flex;justify-content:space-between;align-items:end;pointer-events:none;z-index:5}.touch-pad{display:grid;grid-template-columns:repeat(3,46px);gap:5px}.touch-pad button,.touch-height button{pointer-events:auto;background:#162030aa;border:1px solid var(--line);width:46px;height:44px;border-radius:8px;touch-action:none;user-select:none}.touch-height{display:flex;flex-direction:column;gap:7px}#touch[hidden], [hidden]{display:none!important}@media(max-width:700px){header{top:22px;left:22px;right:22px}.brand-name{font-size:9px}.pill{padding:9px 12px}.top-actions .sound-label{display:none}.intro{left:8%;max-width:85%;top:47%}.intro p{font-size:12px;max-width:265px}.intro h1{font-size:68px}.eyebrow{font-size:8px}.coordinates{right:22px;bottom:115px;font-size:8px}.coordinates strong{font-size:19px}.bottom{left:22px;right:22px;bottom:20px}.experience-label{display:none}.micro{font-size:8px}.primary{padding:13px 18px;gap:23px}.secondary{font-size:10px}#hud{bottom:22px}#hud button{font-size:10px;padding:8px 9px}#stats{left:22px}dialog{padding:24px}.active .brand-name{display:none}}@media(prefers-reduced-motion:reduce){*{transition:none!important}}@media(max-height:560px){.intro{top:49%;transform:translateY(-42%)}.intro h1{font-size:57px;margin:12px 0}.intro p{font-size:11px;margin:15px 0}.loading{margin-top:9px}.coordinates{bottom:85px}.coordinates strong{font-size:20px}}
 </style>
 </head>
-<body class=l>
-<canvas id=c></canvas>
-<div id=m>
-  <h1>Abyssal Garden</h1>
-  <div id=a>
-    <div id=l><div id=p><i id=b></i></div><p id=s>Diving…</p><p id=w hidden>Use Google Chrome for optimal experience</p></div>
-    <div id=g>
-      <button id=d>Dive in</button>
-      <p id=q><span>Detail</span><button>Low</button><button>Medium</button><button>High</button></p>
-      <div id=k>
-        <p>
-          <i><b>W</b><b>A</b><b>S</b><b>D</b></i>Swim
-          <i><b>Q</b><b>E</b></i>Down / up
-          <i><b>Shift</b></i>Faster
-          <i><b>1</b>–<b>6</b></i>Viewpoints
-        </p>
-        <p>
-          <i><b>Esc</b></i>Menu
-          <i><b>M</b></i>Mute
-          <i><b>H</b></i>Stats
-        </p>
-      </div>
-      <p id=h>Hold to swim forward · slide to steer · second finger to go faster</p>
-    </div>
-  </div>
-  <p id=f>
-    <a href=https://github.com/Noniv/abyssal-garden target=_blank><svg viewBox="0 0 16 16"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>GitHub</a>
-    <a href=https://ko-fi.com/noniv target=_blank><svg viewBox="0 0 24 24"><path fill-rule=evenodd d="M2 5h16.5a4.5 4.5 0 0 1 0 9H17a6 6 0 0 1-6 5H8a6 6 0 0 1-6-6zM17 8v3h1.5a1.5 1.5 0 0 0 0-3zM9.5 15.5 5.9 12a2.2 2.2 0 0 1 3.6-2.5 2.2 2.2 0 0 1 3.6 2.5z"/></svg>Support</a>
-  </p>
-</div>
-<button id=o aria-label=Menu>≡</button>
-<pre id=i></pre>
-<script>
-/*SCRIPT*/
-</script>
-</body>
-</html>
+<body>
+<canvas id="scene" aria-label="Vue 3D de Manhattan au crépuscule" tabindex="-1"></canvas><div class="shade"></div>
+<header><a class="brand" href="#" id="home" aria-label="Manhattan at Dusk, accueil"><span class="monogram">M</span><span class="brand-name">MANHATTAN<br><span>AT DUSK</span></span></a><div class="top-actions"><button id="sound" class="pill" aria-pressed="false" aria-label="Activer l’ambiance sonore">♫ <span class="sound-label">Ambiance sonore</span></button><button id="help" class="pill" aria-label="Ouvrir les commandes et les réglages">Commandes <span aria-hidden="true">↗</span></button></div></header>
+<main id="intro" class="intro"><div class="eyebrow">Une promenade à l’heure dorée</div><h1>La ville<br><em>s’allume.</em></h1><p>Les derniers rayons sur les façades.<br>Un taxi jaune au coin de la rue.<br>Et tout Manhattan à explorer.</p><div class="cta"><button id="start" class="primary" disabled>Explorer Manhattan <span aria-hidden="true">↗</span></button><button id="tour-start" class="secondary" disabled>Visite cinématique <span aria-hidden="true">▷</span></button></div><div id="s" class="loading" role="status">Construction du quartier…</div></main>
+<aside class="coordinates"><strong>Somewhere in Manhattan.</strong>40° 45′ N &nbsp; 73° 59′ W<br><span>Un quartier imaginaire. Une heure suspendue.</span></aside>
+<footer class="bottom"><div class="micro">Une ville entièrement générée par code.<br>Un fork de <a href="https://github.com/Noniv/abyssal-garden" target="_blank" rel="noopener">Abyssal Garden</a> · MIT</div><div class="experience-label"><span><b></b> DÉPLACEMENT LIBRE</span><span><b></b> AUCUN MODÈLE 3D IMPORTÉ</span><span><b></b> WEBGPU</span></div></footer>
+<nav id="hud" aria-label="Navigation dans la ville" hidden><button id="view" title="Changer de point de vue (1 à 6)">01 · La ville s’allume</button><button id="tour" aria-pressed="false">▷ Visite</button><button id="pause" title="Revenir à l’accueil">Menu <span class="keycap">Esc</span></button></nav>
+<div id="crosshair" hidden></div><div id="hint" class="hint" role="status"></div><output id="stats" hidden></output>
+<div id="touch" hidden><div class="touch-pad"><span></span><button data-move="KeyW" aria-label="Avancer">↑</button><span></span><button data-move="KeyA" aria-label="Aller à gauche">←</button><button data-move="KeyS" aria-label="Reculer">↓</button><button data-move="KeyD" aria-label="Aller à droite">→</button></div><div class="touch-height"><button data-move="KeyE" aria-label="Monter">＋</button><button data-move="KeyC" aria-label="Descendre">−</button></div></div>
+<dialog id="settings" aria-labelledby="settings-title"><div class="dialog-head"><h2 id="settings-title">Prenez de la hauteur.</h2><button class="close" id="close-settings" aria-label="Fermer les réglages">×</button></div><p>Explorez les rues, longez les façades ou survolez les toits.</p><dl class="controls"><dt>Regarder autour de soi</dt><dd>Souris / glisser</dd><dt>Se déplacer</dt><dd><span class="keycap">ZQSD</span> / <span class="keycap">WASD</span> / flèches</dd><dt>Monter</dt><dd><span class="keycap">E</span> / <span class="keycap">Espace</span></dd><dt>Descendre</dt><dd><span class="keycap">C</span> / <span class="keycap">Ctrl</span></dd><dt>Accélérer</dt><dd><span class="keycap">Shift</span></dd><dt>Point de vue</dt><dd><span class="keycap">1</span> à <span class="keycap">6</span></dd><dt>Ambiance sonore / statistiques</dt><dd><span class="keycap">M</span> / <span class="keycap">H</span></dd><dt>Libérer la souris</dt><dd><span class="keycap">Esc</span></dd></dl><div class="setting"><span>Qualité d’image</span><div class="quality" role="group" aria-label="Qualité d’image"><button data-quality="low" aria-pressed="false">Éco</button><button data-quality="medium" aria-pressed="false">Équilibrée</button><button data-quality="high" aria-pressed="true">Élevée</button></div></div><div class="setting"><label for="exposure">Lumière</label><input type="range" id="exposure" min=".55" max="1.55" step=".05" value="1"></div><div class="places" id="places" aria-label="Points de vue"></div><p style="margin-top:22px;font-size:10px">Ce quartier évoque Manhattan ; son plan est imaginaire. Chrome ou Edge avec WebGPU recommandé. La scène reste utilisable sans son.</p></dialog>
+<section id="failure" role="alert" hidden><h2>La ville attendra un instant.</h2><p id="error-message"></p><p>Essayez une version récente de Chrome ou Edge avec l’accélération graphique activée.</p><button class="primary" onclick="location.reload()">Réessayer ↗</button></section>
+<script>/*SCRIPT*/</script>
+</body></html>

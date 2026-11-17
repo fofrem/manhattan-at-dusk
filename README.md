@@ -1,106 +1,79 @@
-# Abyssal Garden
+# Manhattan at Dusk
 
-**A dreamy underwater world you can swim through, right in your browser.**
+A small, imaginary Manhattan neighbourhood at the moment the city lights come on. Fly between the buildings, follow yellow taxis through the avenues or rise above the rooftops.
 
-Towering kelp forests, sunbeams pouring through a rippling surface, a sunken ship, manta rays gliding overhead.
-And all of it is made by code: no images, no 3D models, no sound files. The whole world fits in **one 96 KB HTML file**.
+**[Get the self-contained HTML](https://github.com/fofrem/manhattan-at-dusk/blob/main/index.html)** — download the raw file and open it in Chrome or Edge.
 
-![Kelp forest with a stone whale tail and a manta ray](.github/screenshots/whale-fluke.jpg)
+![Manhattan at Dusk](.github/screenshots/manhattan-dusk.png)
 
-## Try it
+Forked from **[Noniv/abyssal-garden](https://github.com/Noniv/abyssal-garden)** by Maksymilian Dendura. This version replaces the underwater world with a native WebGPU city while retaining the procedural approach, upstream math helpers and single-file build.
 
-1. Download [`index.html`](index.html).
-2. Open it in **Chrome** or **Edge** on a desktop computer.
-3. Wait a few seconds while the world is built, then press **Dive in** and start swimming.
+## In the city
 
-Nothing to install, and it works offline. It needs a browser with **WebGPU**. If you see *"This scene needs WebGPU"*, update your browser or switch to Chrome / Edge.
+- 36 blocks, brick and glass façades, stepped towers, exterior fire escapes and rooftop water tanks.
+- Irregular warm windows, street lamps, crosswalks, a pocket park and a distant skyline.
+- 40 animated yellow cabs, with a stylized stop-and-go rhythm.
+- Peach sunset, violet sky, atmospheric haze, directional shadows and soft bloom.
+- Free flight with solid building collisions, six viewpoints and an optional cinematic tour.
+- Optional synthesized traffic ambience. Sound starts only when you switch it on.
+- French interface, adjustable image quality, touch controls and readable GPU errors.
 
-## What's down there
+The layout is fictional, inspired by Manhattan. It is not a map or a geographically accurate model. The cabs are ambient animation, not a traffic simulator.
 
-- **Kelp forests** that sway in the current and sparkle with tiny gold and green specks
-- **Light rays** streaming down from a wavy surface, with shimmering caustics on the sea floor
-- **A sunken wooden ship**, a **giant stone whale tail**, rock arches, canyons and floating boulders
-- **Manta rays**, schools of fish, rising bubbles and drifting particles
-- **A purple grotto** with glowing magenta ground cover, coral and barrel sponges
-- **A soundscape** made up as you listen: a deep rumble, distant whale calls, soft chimes and bubbles
+## Run
 
-| | |
-|---|---|
-| ![Shipwreck](.github/screenshots/shipwreck.jpg) | ![Looking up through the kelp](.github/screenshots/kelp-forest.jpg) |
-| ![Barrel sponges](.github/screenshots/sponge-garden.jpg) | ![Light rays over the kelp basin](.github/screenshots/light-rays.jpg) |
+Open **index.html** in a current desktop Chrome or Edge with WebGPU available and hardware acceleration enabled. Nothing to install; the built file works offline.
 
-![The purple grotto](.github/screenshots/purple-grotto.jpg)
+On touch devices, drag across the scene to look around and use the on-screen arrows and height buttons. Mobile WebGPU availability depends on the browser and device.
 
-## Controls
+| Action | Controls |
+| --- | --- |
+| Look | Mouse; drag if pointer lock is unavailable |
+| Move | WASD / ZQSD (physical keys), or arrows |
+| Rise | E or Space |
+| Descend | C, Ctrl, or physical Q (A on AZERTY) |
+| Move faster | Shift |
+| Viewpoints | 1–6 |
+| Sound | M |
+| Performance stats | H |
+| Release mouse / menu | Esc |
 
-| | Keyboard & mouse |
-|---|---|
-| Look around | Move the mouse |
-| Swim | `W` `A` `S` `D` |
-| Up / down | `E` / `Q` |
-| Swim faster | Hold `Shift` |
-| Jump to a viewpoint | `1` to `6` (the spots in the screenshots) |
-| Menu | `Esc` releases the mouse and opens the menu with the list of controls; **Resume** takes you back |
-| Sound on / off | `M` (sound starts when you dive in) |
-| Performance stats | `H` |
-| Detail level | **Low**, **Medium** or **High** in the menu (reloads the page) |
+## Build and test
 
-The seabed, cliffs and arches are solid: you glide along the rock instead of swimming into it, and you still fit through every tunnel and arch. Kelp, plants, corals, sponges, loose rocks, the floating boulders, the ship and the whale tail you can swim through.
+Node.js 22 or newer is recommended.
 
-**On a touchscreen:** hold one finger down to swim forward and slide it to steer. Put a second finger down to go faster. The `≡` button in the corner opens the menu. Phones always show the scene in landscape and start on Low or Medium detail. (Touch support is experimental.)
-
-## Detail levels
-
-The **Low**, **Medium** and **High** buttons in the menu pick the detail level; the current one is lit. Each level is the same world, built with less in it:
-
-| Level | What it is | Picked on a first visit for |
-|---|---|---|
-| **High** | The full scene | Computers |
-| **Medium** | Half of the leaves, sparkles and pebbles; small rocks, sponges and corals cast no shadows | Phones with 8 GB of memory |
-| **Low** | A quarter of the leaves, no anti-aliasing, coarser rocks and corals, simpler lighting, 480p to start with | Other phones, and computers with 4 GB of memory or less |
-
-If loading crashes the tab, or the graphics driver gives up, the page starts again one level lower. Your browser remembers the level, and the resolution and draw distance the scene settled on, for the next visit.
-
-## How it works
-
-- The seabed is sculpted on your graphics card every time the page opens, then decorated with about two million kelp leaves and plants, tens of thousands of rocks, and thousands of sponges, corals and fish.
-- Everything is drawn with **WebGPU** directly. No game engine or 3D library is used.
-- The ship, whale tail, mantas, fish and corals are built from simple mathematical shapes.
-- The sound is synthesized live with the Web Audio API.
-- It's built to run smoothly: about 180 fps at 2560×1440 on an RTX 5070 Ti. On slower hardware it aims for 60 fps by lowering first the resolution and then how far away plants and rocks are drawn, in small steps. The scene is already running, blurred, behind the start menu, so most of that tuning is done before you dive in. A low-end phone (Samsung Galaxy A16) reaches about 20 fps at 670×372 on Low.
-
-## Make it your own
-
-The readable source code is in the [`source`](source) folder. To change something and rebuild `index.html` you need [Node.js](https://nodejs.org) 18 or newer:
-
-```bash
+```sh
 cd source
-npm install
+npm ci
+npm test
 npm run build
 ```
 
-This writes a new `index.html` next to this README. `npm run build:readable` writes an unminified version instead, which is easier to debug in the browser's developer tools.
+The build writes a self-contained **../index.html**. There are no runtime imports, textures, 3D model downloads, fonts, audio files, analytics or API calls. The only links out are ordinary credit links.
 
-`npm run build:dev` writes a separate `dev.html` with two extra tools that are not part of `index.html`: `F` flies the camera along a one-minute path through the whole world, and `B` runs that flight as a benchmark and reports frame and GPU times.
+```sh
+npm run build:readable  # readable index.html
+npm run build:dev       # separate dev.html
+npm run test:browser    # isolated local HTTP server + headless installed Google Chrome
+```
 
-| File | What's inside |
-|---|---|
-| [`source/src/world.js`](source/src/world.js) | The world layout: rock walls, arches, tunnels, kelp forests, sponge gardens, fish schools, mantas, the ship and the whale tail. **A good place to start.** |
-| [`source/src/shaders.js`](source/src/shaders.js) | The look: water and fog colors, lighting, kelp, rocks, the water surface and light rays (WGSL shader code) |
-| [`source/src/main.js`](source/src/main.js) | The renderer, the camera, the controls, the six viewpoints and the camera path the world is laid out around |
-| [`source/src/audio.js`](source/src/audio.js) | The soundscape |
-| [`source/src/quality.js`](source/src/quality.js) | The detail levels: which one a device starts on, and what is remembered between visits |
-| [`source/src/math.js`](source/src/math.js) | Noise, random numbers and mesh-building helpers |
-| [`source/src/dev.js`](source/src/dev.js) | Development tools (fly-through and benchmark), only in `dev.html` |
-| [`source/template.html`](source/template.html) | The page around the scene: loading bar, start menu, links and their styles |
+The browser smoke test needs Google Chrome installed. It checks real WGSL compilation, camera movement, help, quality and exposure controls, canvas resizing, a missing-GPU error, touch UI and absence of external runtime requests. Screenshots are saved under **artifacts/** (ignored by Git). The unit tests check deterministic generation, street clearance, collision sliding and taxi routes.
 
-Some easy first tweaks:
+## Source
 
-- **Water color:** `WCOL` (blue-green water) and `PCOL` (purple grotto) near the top of the shared scene code in `shaders.js`
-- **Sunlight color:** `SUNC` right next to them
-- **Brightness and light rays:** `EXPO` and `RAYS` in `main.js`
-- **Swimming speed:** search for `26 : 7` in `main.js` (fast speed : normal speed)
+| File | Purpose |
+| --- | --- |
+| source/src/world.js | City layout, procedural buildings, street furniture and cab geometry |
+| source/src/city-physics.js | Collision movement, taxi routes and six viewpoints |
+| source/src/shaders.js | WGSL sky, materials, windows, shadows and bloom |
+| source/src/main.js | Native WebGPU renderer, camera, input and UI |
+| source/src/audio.js | Synthesized city ambience |
+| source/src/math.js | Original Abyssal Garden procedural math helpers |
+| source/template.html | Interface and styles |
+| source/build.mjs | Single-HTML bundler based on the upstream build |
 
-## License
+The original `quality.js`, `dev.js` and `prompt.txt` remain as upstream reference material; the city build does not use them.
 
-[MIT](LICENSE): free to use, change and share, including in your own projects.
+## License and credit
+
+MIT. The original [LICENSE](LICENSE), including Maksymilian Dendura’s copyright notice, is retained. Thanks to Noniv for the original Abyssal Garden and its procedural WebGPU foundation.

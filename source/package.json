@@ -1,14 +1,17 @@
 {
-  "name": "abyssal-garden",
+  "name": "manhattan-at-dusk",
   "private": true,
-  "description": "A procedural underwater world rendered with WebGPU, bundled into one HTML file",
+  "description": "A procedural Manhattan neighbourhood at dusk in one WebGPU HTML file",
   "type": "module",
   "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser-smoke.mjs",
     "build": "node build.mjs",
     "build:readable": "node build.mjs --readable",
     "build:dev": "node build.mjs --dev"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "esbuild": "^0.28.2"
   }
 }
